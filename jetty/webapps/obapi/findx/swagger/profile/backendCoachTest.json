@@ -1,0 +1,1246 @@
+﻿{
+	"swagger": "2.0",
+	"info": {
+		"description": "This API document is about backend coach service, please send the parameters of runner related via web service and it  will return calculated information which included VDOT/PaceEstimator calculator or training plan generator etc. </br></br>",
+		"version": "1.0.1",
+		"title": "Virtual Coach Backend Coach API",
+		"contact": {
+			"email": "yctsai@iii.org.tw"
+		}
+	},
+	"host": "dsicoach.win",
+	"basePath": "/coach/analysis",
+	"tags": [
+		{
+			"name": "1. Training Plans Generator",
+			"description": "getting runner's training plan through some exercise parameters"
+		},
+		{
+			"name": "2. Runner Calculator",
+			"description": "getting runner's VDOT/pace(correspond with HRR zone)/etc."
+		}
+	],
+	"schemes": [
+		"https"
+	],
+	"paths": {
+		"/training_plan": {
+			"get": {
+				"tags": [
+					"1. Training Plans Generator"
+				],
+				"summary": "Runner's training plan(original output)",
+				"description": "輸入下述參數取得 10/21 K、4/8 週、每周 1~7 次的訓練菜單",
+				"produces": [
+					"application/json"
+				],
+				"parameters": [
+					{
+						"name": "userId",
+						"in": "query",
+						"description": "registered userId",
+						"required": true,
+						"type": "string"
+					},
+					{
+						"name": "excercise_type",
+						"in": "query",
+						"description": "Training exercise type values that need to be considered for treadmill",
+						"required": true,
+						"type": "string",
+						"items": {
+							"enum": [
+								"treadmill"
+							],
+							"default": "available"
+						},
+						"collectionFormat": "multi"
+					},
+					{
+						"name": "target",
+						"in": "query",
+						"description": "Training target values that need to be considered for competition/lose_weight/personal_best</br> P.S. competition: open; lose_weight: close; personal_best: close",
+						"required": true,
+						"type": "string",
+						"items": {
+							"enum": [
+								"competition"
+							],
+							"default": "available"
+						},
+						"collectionFormat": "multi"
+					},
+					{
+						"name": "distance",
+						"in": "query",
+						"description": "Training target distance values that need to be considered 10K/21K/unknown</br> P.S. 10K/21K/unknown: for competition target",
+						"required": true,
+						"type": "string",
+						"items": {
+							"enum": [
+								"10K",
+								"21K",
+								"unknown"
+							],
+							"default": "available"
+						},
+						"collectionFormat": "multi"
+					},
+					{
+						"name": "finish_week",
+						"in": "query",
+						"description": "Finish week values that need to be considered for 4/8 week",
+						"required": true,
+						"type": "integer",
+						"items": {
+							"enum": [
+								4,
+								8
+							],
+							"default": "available"
+						},
+						"collectionFormat": "multi"
+					},
+					{
+						"name": "exercise_times",
+						"in": "query",
+						"description": "Exercise time values that need to be considered for 1-7",
+						"required": true,
+						"type": "integer",
+						"items": {
+							"enum": [
+								1,
+								2,
+								3,
+								4,
+								5,
+								6,
+								7
+							],
+							"default": "available"
+						},
+						"collectionFormat": "multi"
+					},
+					{
+						"name": "training_start_date",
+						"in": "query",
+						"description": "Training start date values that need to be considered for UTC time format like yyyy-mm-dd.</br> P.S.the training start date must be after than today which you are calling this API",
+						"required": true,
+						"type": "string"
+					},
+					{
+						"name": "BR_dist",
+						"in": "query",
+						"description": "Personal best distance record values that need to be considered for 3K/5K/unknown",
+						"required": true,
+						"type": "string",
+						"items": {
+							"enum": [
+								"3K",
+								"5K",
+								"unknown"
+							],
+							"default": "available"
+						},
+						"collectionFormat": "multi"
+					},
+					{
+						"name": "BR_time",
+						"in": "query",
+						"description": "Personal best time record values that need to be considered for UTC time format like hh:mm:ss",
+						"required": true,
+						"type": "string"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"schema": {
+							"$ref": "#/definitions/training_plan_get_response_200"
+						}
+					},
+					"400": {
+						"description": "BAD REQUEST",
+						"schema": {
+							"$ref": "#/definitions/training_plan_error_response_400"
+						}
+					}
+				},
+				"security": [
+					{
+						"api_key_query": []
+					}
+				]
+			},
+			"post": {
+				"tags": [
+					"1. Training Plans Generator"
+				],
+				"summary": "get runner's training plan then save to backend DB",
+				"description": "輸入下述參數取得 10/21 K、4/8 週、每周 1~7 次的訓練菜單並存入資料庫中",
+				"produces": [
+					"application/json"
+				],
+				"parameters": [
+					{
+						"in": "body",
+						"name": "training plan parameters",
+						"description": "training plan parameter info",
+						"schema": {
+							"$ref": "#/definitions/training_plan_post_parameter"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"schema": {
+							"$ref": "#/definitions/training_plan_post_response_200"
+						}
+					},
+					"400": {
+						"description": "BAD REQUEST",
+						"schema": {
+							"$ref": "#/definitions/training_plan_error_response_400"
+						}
+					}
+				}
+			}
+		},
+		"/runner_calculator/VDOT": {
+			"get": {
+				"tags": [
+					"2. Runner Calculator"
+				],
+				"summary": "Runner's VDOT",
+				"description": "輸入下述參數取得個人模擬最大攝氧量",
+				"produces": [
+					"application/json"
+				],
+				"parameters": [
+					{
+						"name": "userId",
+						"in": "query",
+						"description": "Registered userId",
+						"required": true,
+						"type": "string"
+					},
+					{
+						"name": "distance",
+						"in": "query",
+						"description": "Personal best distance(meter) record value",
+						"required": true,
+						"type": "integer"
+					},
+					{
+						"name": "time",
+						"in": "query",
+						"description": "Personal best time record values that need to be considered for UTC time format like hh:mm:ss",
+						"required": true,
+						"type": "string"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"schema": {
+							"$ref": "#/definitions/runner_calculator_VDOT_get_response_200"
+						}
+					}
+				}
+			}
+		},
+		"/runner_calculator/PaceEstimator": {
+			"get": {
+				"tags": [
+					"2. Runner Calculator"
+				],
+				"summary": "Runner's pace estimation(based on personal VDOT)",
+				"description": "輸入下述參數取得個人配速區間",
+				"produces": [
+					"application/json"
+				],
+				"parameters": [
+					{
+						"name": "userId",
+						"in": "query",
+						"description": "registered userId",
+						"required": true,
+						"type": "string"
+					},
+					{
+						"name": "method",
+						"in": "query",
+						"description": "Solve formula of pace interval estimation value that need to be consider VDOT",
+						"required": true,
+						"type": "string",
+						"items": {
+							"enum": [
+								"VDOT"
+							],
+							"default": "available"
+						},
+						"collectionFormat": "multi"
+					},
+					{
+						"name": "VDOT_value",
+						"in": "query",
+						"description": "Personal VDOT value(you can get the VDOT value from \"/runner_calculator/VDOT\" API)",
+						"required": true,
+						"type": "number"
+					},
+					{
+						"name": "distance",
+						"in": "query",
+						"description": "Personal best distance(meter) record value",
+						"required": true,
+						"type": "integer"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"schema": {
+							"$ref": "#/definitions/runner_calculator_PaceEstimator_get_response_200"
+						}
+					}
+				}
+			}
+		}
+	},
+	"securityDefinitions": {
+		"api_key_query": {
+			"type": "apiKey",
+			"name": "api_key",
+			"in": "query"
+		}
+	},
+	"definitions": {
+		"training_plan_get_response_200": {
+			"type": "object",
+			"properties": {
+				"parameter": {
+					"type": "object",
+					"description": "回傳 training api 之輸入參數",
+					"properties": {
+						"userId": {
+							"type": "string",
+							"description": "使用者ID</br>P.S.值為字串,且使用者ID需經過註冊",
+							"example": "589xxxb1-xxxx-413b-xxxx-06b8exxxa7c5"
+						},
+						"excercise_type": {
+							"type": "string",
+							"description": "運動類型</br>P.S.值為字串,目前只提供輸入treadmill",
+							"example": "treadmill"
+						},
+						"target": {
+							"type": "string",
+							"description": "訓練目標</br>P.S.值為字串,目前只提供輸入competition",
+							"example": "competition"
+						},
+						"distance": {
+							"type": "string",
+							"description": "目標距離</br>P.S.值為字串,目前只提供輸入10K/21K",
+							"example": "10K"
+						},
+						"finish_week": {
+							"type": "integer",
+							"description": "訓練週數</br>P.S.值為整數,目前只提供輸入4/8週",
+							"example": 8
+						},
+						"exercise_times": {
+							"type": "integer",
+							"description": "訓練頻率</br>P.S.值為整數,輸入限制範圍為1-7",
+							"example": 7
+						},
+						"training_start_date": {
+							"type": "string",
+							"description": "計畫開始日</br>P.S.值為字串,輸入限制範圍為yyyy-mm-dd,且訓練起始日期不能早於當天日期",
+							"example": "2018-07-30"
+						},
+						"best_record": {
+							"type": "string",
+							"description": "個人最佳成績</br>P.S.型態為list,輸入3/5K距離下的最佳成績",
+							"example": [
+								"10K",
+								"00:20:19"
+							]
+						},
+						"start_time": {
+							"type": "string",
+							"description": "計畫開始日期</br>P.S.值為字串,輸入限制範圍為yyyy-mm-dd",
+							"example": "2018-07-30-1T00:00:00"
+						},
+						"end_time": {
+							"type": "string",
+							"description": "計畫結束日期</br>P.S.值為字串,輸入限制範圍為yyyy-mm-dd",
+							"example": "2018-09-23-7T00:00:00"
+						}
+					}
+				},
+				"plan_info": {
+					"type": "object",
+					"description": "回傳 training api 之訓練計畫 ps.下列回傳的key會根據finish_week的輸入而有所變化,因目前只提供輸入4/8週,所以回傳之數值只會有 week1-week4 或 week1-week8",
+					"properties": {
+						"week1": {
+							"type": "string",
+							"description": "第一週的訓練菜單",
+							"example": [
+								"LSD_running_E40+2ST",
+								"Other_training_BasicTech",
+								"EZ_running_E30+3ST",
+								"EZ_running_E30+3ST",
+								"Other_training_CoreMuscle",
+								"EZ_running_E30(HRR60%)+2ST",
+								"EZ_running_E30+3ST"
+							]
+						},
+						"week2": {
+							"type": "string",
+							"description": "第二週的訓練菜單",
+							"example": [
+								"LSD_running_E50+2ST",
+								"EZ_running_E30(HRR60%)+2ST",
+								"Other_training_CoreMuscle",
+								"EZ_running_E35+3ST",
+								"EZ_running_E30(HRR60%)+2ST",
+								"Other_training_BasicTech",
+								"EZ_running_E35+3ST"
+							]
+						},
+						"week3": {
+							"type": "string",
+							"description": "第三週的訓練菜單",
+							"example": [
+								"IR_running_E20+R50m*6",
+								"IR_running_E20+R50m*6",
+								"IR_running_E20+R50m*6",
+								"Other_training_CoreMuscle",
+								"LSD_running_E60+2ST",
+								"EZ_running_E30(HRR60%)+2ST",
+								"Other_training_BasicTech"
+							]
+						},
+						"week4": {
+							"type": "string",
+							"description": "第四週的訓練菜單",
+							"example": [
+								"TM_running_E10+(T5/r1)*2+E5",
+								"Other_training_CoreMuscle",
+								"TM_running_E10+(T5/r1)*2+E5",
+								"TM_running_E10+(T5/r1)*2+E5",
+								"Other_training_BasicTech",
+								"EZ_running_E30(HRR60%)+2ST",
+								"TM_running_E10+(T5/r1)*2+E5"
+							]
+						},
+						"week5": {
+							"type": "string",
+							"description": "第五週的訓練菜單",
+							"example": [
+								"Resting",
+								"IR_running_E20+R50m*4",
+								"Resting",
+								"TM_running_E10+(T5/r1)*3+E5",
+								"Resting",
+								"Testing_3k",
+								"TM_running_E10+(T5/r1)*3+E5"
+							]
+						},
+						"week6": {
+							"type": "string",
+							"description": "第六週的訓練菜單",
+							"example": [
+								"EZ_running_E30(HRR60%)+2ST",
+								"EZ_running_E30(HRR60%)+2ST",
+								"TM_running_E10+(T5/r1)*2+E5",
+								"TM_running_E10+(T5/r1)*2+E5",
+								"Other_training_BasicTech",
+								"P_running_E10+M20+E5+6ST",
+								"Other_training_CoreMuscle"
+							]
+						},
+						"week7": {
+							"type": "string",
+							"description": "第七週的訓練菜單",
+							"example": [
+								"TM_running_E10+M10+T10",
+								"P_running_R50m*6+M10",
+								"Other_training_BasicTech",
+								"EZ_running_E30(HRR60%)+2ST",
+								"Other_training_CoreMuscle",
+								"EZ_running_E30(HRR60%)+2ST",
+								"EZ_running_E30(HRR60%)+2ST"
+							]
+						},
+						"week8": {
+							"type": "string",
+							"description": "第八週的訓練菜單",
+							"example": [
+								"P_running_E10+M10",
+								"P_running_E10+M10",
+								"Resting",
+								"Resting",
+								"Resting",
+								"EZ_running_E30+3ST",
+								"Testing_3k"
+							]
+						}
+					}
+				},
+				"class_info": {
+					"type": "object",
+					"description": "回傳 training api 之訓練代碼與相關資訊 ps.下列回傳的key會根據finish_week的輸入而有所變化,因目前只提供輸入4/8週,所以回傳之數值只會有 week1-week4 或 week1-week8",
+					"properties": {
+						"week1": {
+							"type": "array",
+							"description": "第一週訓練菜單的課程資訊",
+							"items": {
+								"type": "object",
+								"properties": {
+									"code": {
+										"type": "string",
+										"description": "課程對應代碼",
+										"example": "LSD0001"
+									},
+									"title": {
+										"type": "string",
+										"description": "訓練內容",
+										"example": "長距離跑-E40+2ST"
+									},
+									"train_category": {
+										"type": "string",
+										"description": "訓練課程類別",
+										"example": "LSD_running"
+									},
+									"content": {
+										"type": "object",
+										"properties": {
+											"main_class_content": {
+												"type": "object",
+												"properties": {
+													"text": {
+														"type": "string",
+														"description": "訓練課程之說明",
+														"example": "長距離跑訓練是指長距離慢跑（Long Slow Distance），只要循序漸進、規律地進行，對於有氧耐力與肌力提升都有明顯的幫助還可以燃燒脂肪，達到減肥的目的。其中LSD的訓練也包含兩種方式，一種是速度較慢的輕鬆跑，一種是速度更快的馬拉松配速跑。"
+													},
+													"url": {
+														"type": "string",
+														"description": "相關教學影片",
+														"example": "https://www.youtube.com/watch?v=-gq8n-8219I"
+													},
+													"image": {
+														"type": "string",
+														"description": "相關圖片",
+														"example": "null"
+													},
+													"description": {
+														"type": "string",
+														"description": "相關教學影片之說明文字",
+														"example": "How To Train For Long Distance Running"
+													}
+												}
+											},
+											"WP_proc_contents": {
+												"type": "object",
+												"properties": {
+													"text": {
+														"type": "string",
+														"description": "訓練課程之說明",
+														"example": "跑前的暖身這是為了提高體溫、提升心跳、並增加關節與肌肉的活動範圍，如此能降低受傷的風險，且跑起步來也會更舒適流暢。暖身首部曲應該從腳踝、膝蓋、髖部、腰、肩、手腕、頸部依序進行，接著以快走或小跑步的方式讓身體熱起來，感覺到身體微微出汗即可"
+													},
+													"url": {
+														"type": "string",
+														"description": "相關教學影片",
+														"example": "https://www.youtube.com/watch?v=Ts5A0-n5-J8"
+													},
+													"image": {
+														"type": "string",
+														"description": "相關圖片",
+														"example": "null"
+													},
+													"description": {
+														"type": "string",
+														"description": "訓練課程之說明",
+														"example": "關節操"
+													}
+												}
+											},
+											"CD_proc_contents": {
+												"type": "object",
+												"properties": {
+													"text": {
+														"type": "string",
+														"description": "訓練課程之說明",
+														"example": "將主運動強度減緩，讓代謝恢復正常，同時排除運動時產生的代謝廢物，冷卻與再伸展合稱為「收操」。在這個逐漸放慢節奏的過程中，運動所產生的代謝廢物也會逐漸消散，原本沉重的雙腿會漸感輕鬆，不若剛練習完的當下那麼緊繃。"
+													},
+													"url": {
+														"type": "string",
+														"description": "相關教學影片",
+														"example": "https://www.youtube.com/watch?v=dxDeO-5KT9o&feature=youtu.be"
+													},
+													"image": {
+														"type": "string",
+														"description": "相關圖片",
+														"example": "null"
+													},
+													"description": {
+														"type": "string",
+														"description": "訓練課程之說明",
+														"example": "收操"
+													}
+												}
+											},
+											"ST_class_contents": {
+												"type": "object",
+												"properties": {
+													"text": {
+														"type": "string",
+														"description": "訓練課程之說明",
+														"example": "快步跑是指在不耗盡體力的情況下提升你的整體速度。快步跑的重點是要加快你的步頻，速度並不重要，跑此項目時，不要跨大步，不要管速度，甚至原地跑也可以。"
+													},
+													"url": {
+														"type": "string",
+														"description": "相關教學影片",
+														"example": "https://www.youtube.com/watch?v=t0ufhZ8AULI&feature=youtu.be"
+													},
+													"image": {
+														"type": "string",
+														"description": "相關圖片",
+														"example": "null"
+													},
+													"description": {
+														"type": "string",
+														"description": "訓練課程之說明",
+														"example": "ST"
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						},
+						"week2": {
+							"type": "array",
+							"description": "第二週訓練菜單的課程資訊",
+							"items": {
+								"type": "object",
+								"properties": {
+									"code": {
+										"type": "string",
+										"description": "課程對應代碼",
+										"example": "LSD0001"
+									},
+									"title": {
+										"type": "string",
+										"description": "訓練內容",
+										"example": "長距離跑-E40+2ST"
+									},
+									"train_category": {
+										"type": "string",
+										"description": "訓練課程類別",
+										"example": "LSD_running"
+									},
+									"content": {
+										"type": "object",
+										"properties": {
+											"main_class_content": {
+												"type": "object",
+												"properties": {
+													"text": {
+														"type": "string",
+														"description": "訓練課程之說明",
+														"example": "長距離跑訓練是指長距離慢跑（Long Slow Distance），只要循序漸進、規律地進行，對於有氧耐力與肌力提升都有明顯的幫助還可以燃燒脂肪，達到減肥的目的。其中LSD的訓練也包含兩種方式，一種是速度較慢的輕鬆跑，一種是速度更快的馬拉松配速跑。"
+													},
+													"url": {
+														"type": "string",
+														"description": "相關教學影片",
+														"example": "https://www.youtube.com/watch?v=-gq8n-8219I"
+													},
+													"image": {
+														"type": "string",
+														"description": "相關圖片",
+														"example": "null"
+													},
+													"description": {
+														"type": "string",
+														"description": "相關教學影片之說明文字",
+														"example": "How To Train For Long Distance Running"
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						},
+						"week3": {
+							"type": "array",
+							"description": "第三週訓練菜單的課程資訊",
+							"items": {
+								"type": "object",
+								"properties": {
+									"code": {
+										"type": "string",
+										"description": "課程對應代碼",
+										"example": "LSD0001"
+									},
+									"title": {
+										"type": "string",
+										"description": "訓練內容",
+										"example": "長距離跑-E40+2ST"
+									},
+									"train_category": {
+										"type": "string",
+										"description": "訓練課程類別",
+										"example": "LSD_running"
+									},
+									"content": {
+										"type": "object",
+										"properties": {
+											"main_class_content": {
+												"type": "object",
+												"properties": {
+													"text": {
+														"type": "string",
+														"description": "訓練課程之說明",
+														"example": "長距離跑訓練是指長距離慢跑（Long Slow Distance），只要循序漸進、規律地進行，對於有氧耐力與肌力提升都有明顯的幫助還可以燃燒脂肪，達到減肥的目的。其中LSD的訓練也包含兩種方式，一種是速度較慢的輕鬆跑，一種是速度更快的馬拉松配速跑。"
+													},
+													"url": {
+														"type": "string",
+														"description": "相關教學影片",
+														"example": "https://www.youtube.com/watch?v=-gq8n-8219I"
+													},
+													"image": {
+														"type": "string",
+														"description": "相關圖片",
+														"example": "null"
+													},
+													"description": {
+														"type": "string",
+														"description": "相關教學影片之說明文字",
+														"example": "How To Train For Long Distance Running"
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						},
+						"week4": {
+							"type": "array",
+							"description": "第四週訓練菜單的課程資訊",
+							"items": {
+								"type": "object",
+								"properties": {
+									"code": {
+										"type": "string",
+										"description": "課程對應代碼",
+										"example": "LSD0001"
+									},
+									"title": {
+										"type": "string",
+										"description": "訓練內容",
+										"example": "長距離跑-E40+2ST"
+									},
+									"train_category": {
+										"type": "string",
+										"description": "訓練課程類別",
+										"example": "LSD_running"
+									},
+									"content": {
+										"type": "object",
+										"properties": {
+											"main_class_content": {
+												"type": "object",
+												"properties": {
+													"text": {
+														"type": "string",
+														"description": "訓練課程之說明",
+														"example": "長距離跑訓練是指長距離慢跑（Long Slow Distance），只要循序漸進、規律地進行，對於有氧耐力與肌力提升都有明顯的幫助還可以燃燒脂肪，達到減肥的目的。其中LSD的訓練也包含兩種方式，一種是速度較慢的輕鬆跑，一種是速度更快的馬拉松配速跑。"
+													},
+													"url": {
+														"type": "string",
+														"description": "相關教學影片",
+														"example": "https://www.youtube.com/watch?v=-gq8n-8219I"
+													},
+													"image": {
+														"type": "string",
+														"description": "相關圖片",
+														"example": "null"
+													},
+													"description": {
+														"type": "string",
+														"description": "相關教學影片之說明文字",
+														"example": "How To Train For Long Distance Running"
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						},
+						"week5": {
+							"type": "array",
+							"description": "第五週訓練菜單的課程資訊",
+							"items": {
+								"type": "object",
+								"properties": {
+									"code": {
+										"type": "string",
+										"description": "課程對應代碼",
+										"example": "LSD0001"
+									},
+									"title": {
+										"type": "string",
+										"description": "訓練內容",
+										"example": "長距離跑-E40+2ST"
+									},
+									"train_category": {
+										"type": "string",
+										"description": "訓練課程類別",
+										"example": "LSD_running"
+									},
+									"content": {
+										"type": "object",
+										"properties": {
+											"main_class_content": {
+												"type": "object",
+												"properties": {
+													"text": {
+														"type": "string",
+														"description": "訓練課程之說明",
+														"example": "長距離跑訓練是指長距離慢跑（Long Slow Distance），只要循序漸進、規律地進行，對於有氧耐力與肌力提升都有明顯的幫助還可以燃燒脂肪，達到減肥的目的。其中LSD的訓練也包含兩種方式，一種是速度較慢的輕鬆跑，一種是速度更快的馬拉松配速跑。"
+													},
+													"url": {
+														"type": "string",
+														"description": "相關教學影片",
+														"example": "https://www.youtube.com/watch?v=-gq8n-8219I"
+													},
+													"image": {
+														"type": "string",
+														"description": "相關圖片",
+														"example": "null"
+													},
+													"description": {
+														"type": "string",
+														"description": "相關教學影片之說明文字",
+														"example": "How To Train For Long Distance Running"
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						},
+						"week6": {
+							"type": "array",
+							"description": "第六週訓練菜單的課程資訊",
+							"items": {
+								"type": "object",
+								"properties": {
+									"code": {
+										"type": "string",
+										"description": "課程對應代碼",
+										"example": "LSD0001"
+									},
+									"title": {
+										"type": "string",
+										"description": "訓練內容",
+										"example": "長距離跑-E40+2ST"
+									},
+									"train_category": {
+										"type": "string",
+										"description": "訓練課程類別",
+										"example": "LSD_running"
+									},
+									"content": {
+										"type": "object",
+										"properties": {
+											"main_class_content": {
+												"type": "object",
+												"properties": {
+													"text": {
+														"type": "string",
+														"description": "訓練課程之說明",
+														"example": "長距離跑訓練是指長距離慢跑（Long Slow Distance），只要循序漸進、規律地進行，對於有氧耐力與肌力提升都有明顯的幫助還可以燃燒脂肪，達到減肥的目的。其中LSD的訓練也包含兩種方式，一種是速度較慢的輕鬆跑，一種是速度更快的馬拉松配速跑。"
+													},
+													"url": {
+														"type": "string",
+														"description": "相關教學影片",
+														"example": "https://www.youtube.com/watch?v=-gq8n-8219I"
+													},
+													"image": {
+														"type": "string",
+														"description": "相關圖片",
+														"example": "null"
+													},
+													"description": {
+														"type": "string",
+														"description": "相關教學影片之說明文字",
+														"example": "How To Train For Long Distance Running"
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						},
+						"week7": {
+							"type": "array",
+							"description": "第七週訓練菜單的課程資訊",
+							"items": {
+								"type": "object",
+								"properties": {
+									"code": {
+										"type": "string",
+										"description": "課程對應代碼",
+										"example": "LSD0001"
+									},
+									"title": {
+										"type": "string",
+										"description": "訓練內容",
+										"example": "長距離跑-E40+2ST"
+									},
+									"train_category": {
+										"type": "string",
+										"description": "訓練課程類別",
+										"example": "LSD_running"
+									},
+									"content": {
+										"type": "object",
+										"properties": {
+											"main_class_content": {
+												"type": "object",
+												"properties": {
+													"text": {
+														"type": "string",
+														"description": "訓練課程之說明",
+														"example": "長距離跑訓練是指長距離慢跑（Long Slow Distance），只要循序漸進、規律地進行，對於有氧耐力與肌力提升都有明顯的幫助還可以燃燒脂肪，達到減肥的目的。其中LSD的訓練也包含兩種方式，一種是速度較慢的輕鬆跑，一種是速度更快的馬拉松配速跑。"
+													},
+													"url": {
+														"type": "string",
+														"description": "相關教學影片",
+														"example": "https://www.youtube.com/watch?v=-gq8n-8219I"
+													},
+													"image": {
+														"type": "string",
+														"description": "相關圖片",
+														"example": "null"
+													},
+													"description": {
+														"type": "string",
+														"description": "相關教學影片之說明文字",
+														"example": "How To Train For Long Distance Running"
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						},
+						"week8": {
+							"type": "array",
+							"description": "第八週訓練菜單的課程資訊",
+							"items": {
+								"type": "object",
+								"properties": {
+									"code": {
+										"type": "string",
+										"description": "課程對應代碼",
+										"example": "LSD0001"
+									},
+									"title": {
+										"type": "string",
+										"description": "訓練內容",
+										"example": "長距離跑-E40+2ST"
+									},
+									"train_category": {
+										"type": "string",
+										"description": "訓練課程類別",
+										"example": "LSD_running"
+									},
+									"content": {
+										"type": "object",
+										"properties": {
+											"main_class_content": {
+												"type": "object",
+												"properties": {
+													"text": {
+														"type": "string",
+														"description": "訓練課程之說明",
+														"example": "長距離跑訓練是指長距離慢跑（Long Slow Distance），只要循序漸進、規律地進行，對於有氧耐力與肌力提升都有明顯的幫助還可以燃燒脂肪，達到減肥的目的。其中LSD的訓練也包含兩種方式，一種是速度較慢的輕鬆跑，一種是速度更快的馬拉松配速跑。"
+													},
+													"url": {
+														"type": "string",
+														"description": "相關教學影片",
+														"example": "https://www.youtube.com/watch?v=-gq8n-8219I"
+													},
+													"image": {
+														"type": "string",
+														"description": "相關圖片",
+														"example": "null"
+													},
+													"description": {
+														"type": "string",
+														"description": "相關教學影片之說明文字",
+														"example": "How To Train For Long Distance Running"
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"plan_date_info": {
+					"type": "object",
+					"description": "回傳 training api 之訓練開始時間與結束時間之相關資訊 ps.下列回傳的時間數值會根據 training_start_date 的輸入而有所變化,因目前只提供輸入4/8週,所以回傳之數值長度最長只會有 28-56 天",
+					"properties": {
+						"date": {
+							"type": "string",
+							"example": [
+								"2018-07-30-1T00:00:00",
+								"2018-07-31-2T00:00:00",
+								"2018-08-01-3T00:00:00",
+								"2018-08-02-4T00:00:00",
+								"2018-08-03-5T00:00:00",
+								"2018-08-04-6T00:00:00",
+								"2018-08-05-7T00:00:00",
+								"2018-08-06-1T00:00:00",
+								"2018-08-07-2T00:00:00",
+								"2018-08-08-3T00:00:00",
+								"2018-08-09-4T00:00:00",
+								"2018-08-10-5T00:00:00",
+								"2018-08-11-6T00:00:00",
+								"2018-08-12-7T00:00:00",
+								"2018-08-13-1T00:00:00",
+								"2018-08-14-2T00:00:00",
+								"2018-08-15-3T00:00:00",
+								"2018-08-16-4T00:00:00",
+								"2018-08-17-5T00:00:00",
+								"2018-08-18-6T00:00:00",
+								"2018-08-19-7T00:00:00",
+								"2018-08-20-1T00:00:00",
+								"2018-08-21-2T00:00:00",
+								"2018-08-22-3T00:00:00",
+								"2018-08-23-4T00:00:00",
+								"2018-08-24-5T00:00:00",
+								"2018-08-25-6T00:00:00",
+								"2018-08-26-7T00:00:00",
+								"2018-08-27-1T00:00:00",
+								"2018-08-28-2T00:00:00",
+								"2018-08-29-3T00:00:00",
+								"2018-08-30-4T00:00:00",
+								"2018-08-31-5T00:00:00",
+								"2018-09-01-6T00:00:00",
+								"2018-09-02-7T00:00:00",
+								"2018-09-03-1T00:00:00",
+								"2018-09-04-2T00:00:00",
+								"2018-09-05-3T00:00:00",
+								"2018-09-06-4T00:00:00",
+								"2018-09-07-5T00:00:00",
+								"2018-09-08-6T00:00:00",
+								"2018-09-09-7T00:00:00",
+								"2018-09-10-1T00:00:00",
+								"2018-09-11-2T00:00:00",
+								"2018-09-12-3T00:00:00",
+								"2018-09-13-4T00:00:00",
+								"2018-09-14-5T00:00:00",
+								"2018-09-15-6T00:00:00",
+								"2018-09-16-7T00:00:00",
+								"2018-09-17-1T00:00:00",
+								"2018-09-18-2T00:00:00",
+								"2018-09-19-3T00:00:00",
+								"2018-09-20-4T00:00:00",
+								"2018-09-21-5T00:00:00",
+								"2018-09-22-6T00:00:00"
+							]
+						}
+					}
+				}
+			}
+		},
+		"training_plan_post_parameter": {
+			"type": "object",
+			"properties": {
+				"userId": {
+					"type": "string",
+					"description": "使用者ID</br>P.S.值為字串,且使用者ID需經過註冊",
+					"example": "589xxxb1-xxxx-413b-xxxx-06b8exxxa7c5"
+				},
+				"exercise_type": {
+					"type": "string",
+					"description": "運動類型</br>P.S.值為字串,目前只提供輸入treadmill",
+					"example": "treadmill"
+				},
+				"target": {
+					"type": "string",
+					"description": "訓練目標</br>P.S.值為字串,目前只提供輸入competition",
+					"example": "competition"
+				},
+				"distance": {
+					"type": "string",
+					"description": "目標距離</br>P.S.值為字串,目前只提供輸入10K/21K",
+					"example": "10K"
+				},
+				"finish_week": {
+					"type": "integer",
+					"description": "訓練週數</br>P.S.值為整數,目前只提供輸入4/8週",
+					"example": 8
+				},
+				"exercise_times": {
+					"type": "integer",
+					"description": "訓練頻率</br>P.S.值為整數,輸入限制範圍為1-7",
+					"example": 7
+				},
+				"training_start_date": {
+					"type": "string",
+					"description": "計畫開始日</br>P.S.值為字串,輸入限制範圍為yyyy-mm-dd,且訓練起始日期不能早於當天日期",
+					"example": "2018-07-30"
+				},
+				"BR_dist": {
+					"type": "string",
+					"description": "最佳成績(距離)</br>P.S.值為字串,目前只提供輸入3K/5K/unknow",
+					"example": "5K"
+				},
+				"BR_time": {
+					"type": "string",
+					"description": "最佳成績(時間)</br>P.S.值為字串,輸入限制範圍為hh:mm:ss",
+					"example": "00:20:19"
+				}
+			}
+		},
+		"training_plan_post_response_200": {
+			"type": "object",
+			"properties": {
+				"result": {
+					"type": "boolean",
+					"description": "result status",
+					"example": true
+				},
+				"planId": {
+					"type": "integer",
+					"description": "plan's id",
+					"example": 4
+				}
+			}
+		},
+		"training_plan_error_response_400": {
+			"type": "object",
+			"properties": {
+				"result": {
+					"type": "boolean",
+					"description": "result status",
+					"example": false
+				},
+				"message": {
+					"type": "string",
+					"description": "result message",
+					"example": "parameter error"
+				}
+			}
+		},
+		"runner_calculator_VDOT_get_response_200": {
+			"type": "object",
+			"properties": {
+				"userId": {
+					"type": "string",
+					"description": "經過註冊後的使用者ID",
+					"example": "589xxxb1-xxxx-413b-xxxx-06b8exxxa7c5"
+				},
+				"VDOT": {
+					"type": "integer",
+					"description": "個人模擬最大攝氧量",
+					"example": 28
+				},
+				"Pmax": {
+					"type": "number",
+					"description": "最大攝氧量百分比",
+					"example": 0.956
+				},
+				"Distance": {
+					"type": "integer",
+					"description": "跑者所輸入之最佳成績(距離)",
+					"example": 3000
+				},
+				"Vo2": {
+					"type": "number",
+					"description": "固定跑速下的攝氧量",
+					"example": 26.77
+				},
+				"Time": {
+					"type": "string",
+					"description": "跑者所輸入之最佳成績(時間)",
+					"example": "00:20:19"
+				}
+			}
+		},
+		"runner_calculator_PaceEstimator_get_response_200": {
+			"type": "object",
+			"properties": {
+				"userId": {
+					"type": "string",
+					"description": "經過註冊後的使用者ID",
+					"example": "589xxxb1-xxxx-413b-xxxx-06b8exxxa7c5"
+				},
+				"E_Zone": {
+					"type": "string",
+					"description": "個人E心率配速區間,包含upper/lower bound",
+					"example": [
+						"09:19",
+						"07:48"
+					]
+				},
+				"M_Zone": {
+					"type": "string",
+					"description": "個人M心率配速區間,包含upper/lower bound",
+					"example": [
+						"07:48",
+						"07:02"
+					]
+				},
+				"T_Zone": {
+					"type": "string",
+					"description": "個人T心率配速區間,包含upper/lower bound",
+					"example": [
+						"07:02",
+						"06:46"
+					]
+				},
+				"A_Zone": {
+					"type": "string",
+					"description": "個人A心率配速區間,包含upper/lower bound",
+					"example": [
+						"06:46",
+						"06:25"
+					]
+				},
+				"I_Zone": {
+					"type": "string",
+					"description": "個人I心率配速區間,包含upper/lower bound",
+					"example": [
+						"06:25",
+						"06:05"
+					]
+				},
+				"R_Zone": {
+					"type": "string",
+					"description": "個人R心率配速區間,包含upper/lower bound",
+					"example": [
+						"06:05",
+						"05:13"
+					]
+				}
+			}
+		}
+	}
+}
