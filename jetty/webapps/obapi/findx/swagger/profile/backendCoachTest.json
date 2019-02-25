@@ -1,4 +1,4 @@
-﻿{
+{
 	"swagger": "2.0",
 	"info": {
 		"description": "This API document is about backend coach service, please send the parameters of runner related via web service and it  will return calculated information which included VDOT/PaceEstimator calculator or training plan generator etc. </br></br>",

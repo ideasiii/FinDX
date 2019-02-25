@@ -3,13 +3,11 @@
 
 <body>
 
-<h4>simple test</h4>
+<%@ page contentType="text/html; charset=utf-8" language="java"%>
 
-<%--echo hello world--%>
-
-<%@page language="java"%>
-
-<%="Hello World"%>
+<%
+	response.sendRedirect("findx/index.html");
+%>
 
 </body>
 
